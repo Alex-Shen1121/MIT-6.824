@@ -123,8 +123,8 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 			continue
 		}
 		outputFileName := fmt.Sprintf("mr-%d-%d", task.TaskID, i)
-		//outputFile, _ := ioutil.TempFile("./tmp/", "tmp_")
-		outputFile, err := os.OpenFile("./tmp/"+outputFileName, os.O_WRONLY|os.O_CREATE, 0666)
+		outputFile, _ := ioutil.TempFile("./", "tmp_")
+		//outputFile, err := os.OpenFile("./tmp/"+outputFileName, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			fmt.Printf("文件创建失败")
 		}
@@ -136,7 +136,7 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 			}
 		}
 		outputFile.Close()
-		os.Rename("./tmp/"+outputFile.Name(), outputFileName)
+		os.Rename(outputFile.Name(), outputFileName)
 	}
 }
 
@@ -167,7 +167,7 @@ func doReduce(task *Task, reducef func(string, []string) string) {
 	sort.Sort(ByKey(intermediate))
 
 	oname := fmt.Sprintf("mr-out-%d", task.TaskID)
-	ofile, _ := os.Create(oname)
+	ofile, _ := ioutil.TempFile("./", "tmp_")
 
 	i := 0
 	for i < len(intermediate) {
@@ -188,6 +188,7 @@ func doReduce(task *Task, reducef func(string, []string) string) {
 	}
 
 	ofile.Close()
+	os.Rename(ofile.Name(), oname)
 }
 
 //
