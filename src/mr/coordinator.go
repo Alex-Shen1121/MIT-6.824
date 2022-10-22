@@ -144,7 +144,19 @@ func (c *Coordinator) GiveTask(args *RPCArgs, reply *RPCReply) error {
 
 // 根据args判断任务完成情况
 func (c *Coordinator) TaskDone(args *RPCArgs, reply *RPCReply) error {
-	reply.TaskInfo = args.TaskInfo
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	switch args.TaskInfo.TaskType {
+	case Map:
+		delete(c.mapTasksInProgress, args.TaskInfo.TaskID)
+		fmt.Printf("Map task %d done, %d tasks left\n",
+			args.TaskInfo.TaskID, len(c.mapTasksInProgress)+len(c.mapTasksReady))
+	case Reduce:
+		delete(c.reduceTasksInProgress, args.TaskInfo.TaskID)
+		fmt.Printf("Reduce task %d done, %d tasks left\n",
+			args.TaskInfo.TaskID, len(c.reduceTasksInProgress)+len(c.reduceTasksReady))
+	}
 	return nil
 }
 
