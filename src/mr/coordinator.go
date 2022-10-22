@@ -3,6 +3,7 @@ package mr
 import (
 	"log"
 	"sync"
+	"time"
 )
 import "net"
 import "os"
@@ -18,6 +19,11 @@ type Coordinator struct {
 
 	reduceTasksReady      map[int]Task
 	reduceTasksInProgress map[int]Task
+
+	NReduce int
+	MMap    int
+
+	reduceReady bool
 }
 
 // Task info
@@ -52,7 +58,7 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 
 // GiveTask : 返回reply，告知worker任务信息
 func (c *Coordinator) GiveTask(args *RPCArgs, reply *RPCReply) error {
-	reply.TaskInfo = args.TaskInfo
+	c.
 	return nil
 }
 
@@ -99,6 +105,26 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{}
 
 	// Your code here.
+	// 初始化队列
+	c.mapTasksReady = make(map[int]Task)
+	c.reduceTasksReady = make(map[int]Task)
+	c.mapTasksInProgress = make(map[int]Task)
+	c.reduceTasksInProgress = make(map[int]Task)
+
+	// 初始化
+	numFile := len(files)
+	for i, file := range files {
+		c.mapTasksReady[i] = Task{
+			Filename:  file,
+			TaskType:  Map,
+			TaskID:    i,
+			NReduce:   nReduce,
+			MMap:      numFile,
+			TimeStamp: time.Now().Unix()}
+	}
+	//c.reduceReady = false // 这个字段还没提到，待会儿说
+	c.NReduce = nReduce
+	c.MMap = numFile
 
 	c.server()
 	return &c
