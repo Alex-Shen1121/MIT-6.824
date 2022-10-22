@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"time"
 )
 import "log"
@@ -18,6 +19,14 @@ type KeyValue struct {
 	Key   string
 	Value string
 }
+
+// for sorting by key.
+type ByKey []KeyValue
+
+// for sorting by key.
+func (a ByKey) Len() int           { return len(a) }
+func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByKey) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
 //
 // use ihash(key) % NReduce to choose the reduce
@@ -115,7 +124,7 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 		}
 		outputFileName := fmt.Sprintf("mr-%d-%d", task.TaskID, i)
 		//outputFile, _ := ioutil.TempFile("./tmp/", "tmp_")
-		outputFile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE, 0666)
+		outputFile, err := os.OpenFile("./tmp/"+outputFileName, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			fmt.Printf("文件创建失败")
 		}
@@ -132,9 +141,53 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 }
 
 // Reduce方法
-func doReduce(task *Task, reducef func(string, string) []KeyValue) {
+func doReduce(task *Task, reducef func(string, []string) string) {
 	fmt.Printf("Reduce worker get task %d\n", task.TaskID)
 
+	// 从tmp文件中读取中间文件
+	intermediate := make([]KeyValue, 0)
+	for i := 0; i < task.MMap; i++ {
+		// 读取文件
+		inputFileName := fmt.Sprintf("mr-%d-%d", i, task.TaskID)
+		inputFile, err := os.OpenFile("./tmp/"+inputFileName, os.O_RDWR, 0666)
+		if err != nil {
+			fmt.Printf("打开文件失败")
+		}
+		dec := json.NewDecoder(inputFile)
+		for {
+			var kv KeyValue
+			if err := dec.Decode(&kv); err != nil {
+				break
+			}
+			intermediate = append(intermediate, kv)
+		}
+
+	}
+
+	sort.Sort(ByKey(intermediate))
+
+	oname := fmt.Sprintf("mr-out-%d", task.TaskID)
+	ofile, _ := os.Create(oname)
+
+	i := 0
+	for i < len(intermediate) {
+		j := i + 1
+		for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
+			j++
+		}
+		values := []string{}
+		for k := i; k < j; k++ {
+			values = append(values, intermediate[k].Value)
+		}
+		output := reducef(intermediate[i].Key, values)
+
+		// this is the correct format for each line of Reduce output.
+		fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
+
+		i = j
+	}
+
+	ofile.Close()
 }
 
 //
