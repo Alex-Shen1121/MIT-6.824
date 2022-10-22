@@ -65,12 +65,12 @@ func Worker(mapf func(string, string) []KeyValue,
 				fmt.Printf("执行 Reduce 任务")
 				doReduce(&reply.TaskInfo, reducef)
 			// 闲置
-			case Idle:
+			case Wait:
 				fmt.Printf("当前 Worker 空闲，等待一秒")
 				time.Sleep(time.Second)
 				continue
 			case Completed:
-				fmt.Printf("完成所有 Task 任务")
+				fmt.Printf("已完成所有 Task 任务。 Worker %d 退出。", reply.TaskInfo.TaskID)
 				break
 			}
 			// 告知coordinator任务完成
