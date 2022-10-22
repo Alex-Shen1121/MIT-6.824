@@ -11,7 +11,7 @@ import "net/http"
 
 type Coordinator struct {
 	// Your definitions here.
-	mux sync.Mutex
+	mutex sync.Mutex
 
 	mapTasksReady      map[int]Task
 	mapTasksInProgress map[int]Task
@@ -30,8 +30,10 @@ type Task struct {
 
 // Task type
 const (
-	Map    = 0
-	Reduce = 1
+	Map       = 0
+	Reduce    = 1
+	idle      = 2
+	completed = 3
 )
 
 // Your code here -- RPC handlers for the worker to call.
@@ -42,7 +44,12 @@ const (
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
-	reply.Y = args.X + 1
+	reply.Y = args.X + 2
+	return nil
+}
+
+func (c *Coordinator) GiveTask(args *RPCArgs, reply *RPCReply) error {
+	reply.TaskInfo = args.TaskInfo
 	return nil
 }
 

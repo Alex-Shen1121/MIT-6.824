@@ -29,13 +29,24 @@ func ihash(key string) int {
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 
-	// Your worker implementation here.
+	//// Your worker implementation here.
+	// 不断向coordinator更新状态
 	for {
+		args := RPCArgs{}
+		reply := RPCReply{}
 
+		// 向coordinator索取任务
+		ok := call("Coordinator.GiveTask", &args, &reply)
+
+		if ok {
+			fmt.Printf("reply.TaskInfo : %v\n", reply.TaskInfo)
+		} else {
+			fmt.Printf("call failed")
+		}
 	}
 
 	// uncomment to send the Example RPC to the coordinator.
-	// CallExample()
+	//CallExample()
 
 }
 
