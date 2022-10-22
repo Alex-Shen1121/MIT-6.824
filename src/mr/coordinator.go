@@ -26,14 +26,16 @@ type Task struct {
 	TaskType  int
 	TaskID    int
 	TimeStamp int64 // in seconds
+	NReduce   int   // reduce 任务数量
+	MMap      int   // map 任务数量
 }
 
 // Task type
 const (
 	Map       = 0
 	Reduce    = 1
-	idle      = 2
-	completed = 3
+	Idle      = 2
+	Completed = 3
 )
 
 // Your code here -- RPC handlers for the worker to call.
@@ -48,7 +50,14 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	return nil
 }
 
+// GiveTask : 返回reply，告知worker任务信息
 func (c *Coordinator) GiveTask(args *RPCArgs, reply *RPCReply) error {
+	reply.TaskInfo = args.TaskInfo
+	return nil
+}
+
+// 根据args判断任务完成情况
+func (c *Coordinator) TaskDone(args *RPCArgs, reply *RPCReply) error {
 	reply.TaskInfo = args.TaskInfo
 	return nil
 }
