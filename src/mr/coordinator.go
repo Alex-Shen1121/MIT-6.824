@@ -184,6 +184,12 @@ func (c *Coordinator) Done() bool {
 	ret := false
 
 	// Your code here.
+	if len(c.mapTasksReady) == 0 &&
+		len(c.mapTasksInProgress) == 0 &&
+		len(c.reduceTasksReady) == 0 &&
+		len(c.reduceTasksInProgress) == 0 {
+		ret = true
+	}
 
 	return ret
 }

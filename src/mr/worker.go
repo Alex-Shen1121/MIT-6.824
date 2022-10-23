@@ -58,19 +58,19 @@ func Worker(mapf func(string, string) []KeyValue,
 			switch reply.TaskInfo.TaskType {
 			// 执行Map任务
 			case Map:
-				fmt.Printf("执行 Map 任务")
+				fmt.Println("执行 Map 任务")
 				doMap(&reply.TaskInfo, mapf)
 			// 执行Reduce任务
 			case Reduce:
-				fmt.Printf("执行 Reduce 任务")
+				fmt.Println("执行 Reduce 任务")
 				doReduce(&reply.TaskInfo, reducef)
 			// 闲置
 			case Wait:
-				fmt.Printf("当前 Worker 空闲，等待一秒")
+				fmt.Println("当前 Worker 空闲，等待一秒")
 				time.Sleep(time.Second)
 				continue
 			case Completed:
-				fmt.Printf("已完成所有 Task 任务。 Worker %d 退出。", reply.TaskInfo.TaskID)
+				fmt.Println("已完成所有 Task 任务。 Worker %d 退出。", reply.TaskInfo.TaskID)
 				break
 			}
 			// 告知coordinator任务完成
@@ -98,7 +98,7 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 		intermediate[i] = make([]KeyValue, 0)
 	}
 	filename := task.Filename
-	file, err := os.Open(filename)
+	file, err := os.Open("./" + filename)
 	if err != nil {
 		log.Fatalf("cannot open %v", filename)
 	}
@@ -109,6 +109,7 @@ func doMap(task *Task, mapf func(string, string) []KeyValue) {
 	file.Close()
 
 	// 执行map方法并写入中间文件
+	fmt.Println(os.Getwd())
 	kva := mapf(filename, string(content))
 	for _, kv := range kva {
 		intermediate[ihash(kv.Key)%task.NReduce] =
@@ -149,7 +150,7 @@ func doReduce(task *Task, reducef func(string, []string) string) {
 	for i := 0; i < task.MMap; i++ {
 		// 读取文件
 		inputFileName := fmt.Sprintf("mr-%d-%d", i, task.TaskID)
-		inputFile, err := os.OpenFile("./tmp/"+inputFileName, os.O_RDWR, 0666)
+		inputFile, err := os.OpenFile("./"+inputFileName, os.O_RDWR, 0666)
 		if err != nil {
 			fmt.Printf("打开文件失败")
 		}

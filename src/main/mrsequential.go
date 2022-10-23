@@ -46,6 +46,7 @@ func main() {
 			log.Fatalf("cannot read %v", filename)
 		}
 		file.Close()
+		fmt.Println(os.Getwd())
 		kva := mapf(filename, string(content))
 		intermediate = append(intermediate, kva...)
 	}
